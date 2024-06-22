@@ -51,14 +51,38 @@ df_update = pd.concat([df_science, df_social])
 
 #%% FIRST EDA
 # Imbalance check on geography region
-plt.figure(figsize=(10, 10), dpi=600)
 temp = df_update['region'].value_counts(normalize=True);
-plt.pie(temp, labels=temp.index, autopct='%1.0f%%');
+temp = pd.DataFrame(temp).join(region)
+top4 = temp.reset_index().iloc[:5, 1:3]
+others = temp.reset_index().iloc[5:, 1:3]
+others = pd.DataFrame({
+    'proportion' : [others['proportion'].sum()],
+    'name': ['KHU VỰC KHÁC']
+    })
+temp = pd.concat([top4, others], axis="rows")
+plt.figure(figsize=(10, 10), dpi=600)
+plt.pie(temp.proportion, labels=temp.name, autopct='%1.0f%%',
+        radius = 0.75,rotatelabels=True,
+        colors=['aquamarine', 'turquoise', 'gold', 'coral', 'pink', 'lavender']);
 
 # Imbalance check on economic region
-plt.figure(figsize=(5, 5), dpi=600)
 temp = df_update['economic'].value_counts(normalize=True);
-plt.pie(temp, labels=temp.index, autopct='%1.0f%%');
+temp = pd.DataFrame({
+    "economic": temp,
+    "name": ['Vùng 1', 'Vùng 3', 'Vùng 2', 'Vùng 0']
+    })
+plt.figure(figsize=(5, 5), dpi=600)
+plt.pie(temp.economic, labels=temp.name, autopct='%1.0f%%',
+        radius = 0.75,
+        colors=['aquamarine', 'orange', 'turquoise', 'salmon']);
+
+# Average score check
+temp = df_update.drop(columns=['economic','region'])
+plt.figure(figsize=(8, 6), dpi=600)
+sns.boxplot(data=temp,palette='deep', width=.5, orient='h',
+            flierprops={'markerfacecolor':'1',
+                        'markersize': 3
+                         })
 #%% EDA SUBJECT SCORE DISTRIBUTION BY REGION
 # Spread of data: Math, Literature, English
 plt.figure(figsize=(5, 5), dpi=600)
@@ -75,6 +99,24 @@ plt.ylabel("Density")
 
 plt.figure(figsize=(5, 5), dpi=600)
 sns.kdeplot(data=df_update, x='ngoai_ngu', hue='economic', palette='deep')
+plt.title("Distribution of English scores")
+plt.xlabel("English score")
+plt.ylabel("Density")
+
+plt.figure(figsize=(10, 5), dpi=600)
+temp = df_update[(df_update['economic']==3)]['region'].map(
+    {1:'high', 2:'high', 4:'high', 44:'high', 3:'low',17:'low',55:'low'})
+sns.kdeplot(data=df_update[df_update['economic']==3],
+            x='ngoai_ngu', hue=temp, palette='deep')
+plt.title("Distribution of English scores")
+plt.xlabel("English score")
+plt.ylabel("Density")
+
+plt.figure(figsize=(10, 5), dpi=600)
+temp = df_update[(df_update['economic']==3) & (df_update['region']<3)]['region'].map(
+    {1:'HÀ NỘI', 2:'HỒ CHÍ MINH'})
+sns.kdeplot(data=df_update[(df_update['economic']==3) & (df_update['region']<3)],
+            x='ngoai_ngu', hue=temp, palette='deep')
 plt.title("Distribution of English scores")
 plt.xlabel("English score")
 plt.ylabel("Density")
@@ -149,14 +191,27 @@ fig.show()
 # Correlation between subject and region
 economic_corr = df_update.corr()
 economic_corr = economic_corr.iloc[[0, 1, 2, 3, 4, 5, 8 ,9, 10],7]
-plt.figure(figsize=(8, 2), dpi=900)
-sns.heatmap(data=pd.DataFrame(economic_corr).T, annot=True, fmt=".2f")
+plt.figure(figsize=(8, 2), dpi=600)
+sns.heatmap(data=pd.DataFrame(economic_corr).T, annot=True, fmt=".2f",
+            cmap='Greens')
 plt.title("Correlation between subject scores and economic")
 plt.yticks(rotation=0)
 
 
 # Correlation between subject
 subject_corr = df_update.iloc[:,[0, 1, 2, 3, 4, 5, 8 ,9, 10]].corr()
-plt.figure(figsize=(10, 5), dpi=1200)
+plt.figure(figsize=(10, 5), dpi=600)
+sns.heatmap(data=subject_corr, annot=True, fmt=".1f")
+plt.title("Correlation between subject scores")
+
+# Correlation between science group
+subject_corr = df_science.iloc[:,[0, 1, 2, 3, 4, 5]].corr()
+plt.figure(figsize=(10, 5), dpi=600)
+sns.heatmap(data=subject_corr, annot=True, fmt=".1f")
+plt.title("Correlation between subject scores")
+
+# Correlation between social group
+subject_corr = df_social.iloc[:,[0, 1, 2, 3, 4, 5]].corr()
+plt.figure(figsize=(10, 5), dpi=600)
 sns.heatmap(data=subject_corr, annot=True, fmt=".1f")
 plt.title("Correlation between subject scores")
