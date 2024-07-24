@@ -48,6 +48,7 @@ print(f"{len(df_gdtx)} student on GDTX major, \
 make up {len(df_gdtx) / total_num * 100:.2f}%")
 
 df_update = pd.concat([df_science, df_social])
+df_update['mean'] = df_update.drop(columns=['region', 'economic']).mean(axis=1)
 
 #%% FIRST EDA
 # Imbalance check on geography region
@@ -159,6 +160,13 @@ plt.title("Distribution of Humanity scores")
 plt.xlabel("Score")
 plt.ylabel("Density")
 
+# Spread of data: Mean
+plt.figure(figsize=(5, 5), dpi=600)
+sns.kdeplot(data=df_update, x='mean', hue='economic', palette='deep')
+plt.title("Distribution of Literature scores")
+plt.xlabel("Mean score")
+plt.ylabel("Density")
+
 #%% EDA ENGLISH MAP
 region_mean_score = df_update.groupby("region")["ngoai_ngu"].mean()
 top10 = region_mean_score.sort_values(ascending=False).iloc[0:10]
@@ -190,19 +198,12 @@ fig.show()
 #%% EDA CORRELATION
 # Correlation between subject and region
 economic_corr = df_update.corr()
-economic_corr = economic_corr.iloc[[0, 1, 2, 3, 4, 5, 8 ,9, 10],7]
+economic_corr = economic_corr.iloc[[0, 1, 2, 3, 4, 5, 8 ,9, 10, 11],7]
 plt.figure(figsize=(8, 2), dpi=600)
 sns.heatmap(data=pd.DataFrame(economic_corr).T, annot=True, fmt=".2f",
             cmap='Greens')
 plt.title("Correlation between subject scores and economic")
 plt.yticks(rotation=0)
-
-
-# Correlation between subject
-subject_corr = df_update.iloc[:,[0, 1, 2, 3, 4, 5, 8 ,9, 10]].corr()
-plt.figure(figsize=(10, 5), dpi=600)
-sns.heatmap(data=subject_corr, annot=True, fmt=".1f")
-plt.title("Correlation between subject scores")
 
 # Correlation between science group
 subject_corr = df_science.iloc[:,[0, 1, 2, 3, 4, 5]].corr()
@@ -210,8 +211,22 @@ plt.figure(figsize=(10, 5), dpi=600)
 sns.heatmap(data=subject_corr, annot=True, fmt=".1f")
 plt.title("Correlation between subject scores")
 
+# Correlation between mean score and each subject score in science group
+df_science['mean_score'] = df_science.iloc[:,[0, 1, 2, 3, 4, 5]].mean(axis=1)
+temp_corr = df_science.corr()['mean_score'][:-4].to_frame()
+plt.figure(figsize=(8, 2), dpi=600)
+sns.heatmap(data=temp_corr.T, annot=True, fmt=".2f", cmap="Greens")
+plt.title("Correlation between mean score and subject scores")
+
 # Correlation between social group
 subject_corr = df_social.iloc[:,[0, 1, 2, 3, 4, 5]].corr()
 plt.figure(figsize=(10, 5), dpi=600)
 sns.heatmap(data=subject_corr, annot=True, fmt=".1f")
 plt.title("Correlation between subject scores")
+
+# Correlation between mean score and each subject score in social group
+df_social['mean_score'] = df_social.iloc[:,[0, 1, 2, 3, 4, 5]].mean(axis=1)
+temp_corr = df_social.corr()['mean_score'][:-4].to_frame()
+plt.figure(figsize=(8, 2), dpi=600)
+sns.heatmap(data=temp_corr.T, annot=True, fmt=".2f", cmap="Greens")
+plt.title("Correlation between mean score and subject scores")
