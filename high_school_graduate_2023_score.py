@@ -3,6 +3,7 @@
 #%% LIBRARY
 import pandas as pd
 pd.options.display.max_columns = None
+import geopandas as gpd
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -194,6 +195,51 @@ fig.update_layout(mapbox_style="carto-positron")
 
 # Show figure
 fig.show()
+
+#%% EDA ENGLISH MAP V2
+def geo_dataframe(filepath):
+    df = gpd.read_file(filepath)
+    df.loc[44, 'ten_tinh'] = 'Quảng Bình'
+    df.loc[31, 'ten_tinh'] = 'Kiên Giang'
+    df.loc[12, 'ten_tinh'] = 'Cần Thơ'
+    df.loc[57, 'ten_tinh'] = 'Hồ Chí Minh'
+    df.loc[1, 'ten_tinh'] = 'BÀ RỊA – VŨNG TÀU'
+    df.loc[55, 'ten_tinh'] = 'Thừa Thiên - Huế'
+    df.loc[15, 'ten_tinh'] = 'ĐẮK LẮK'
+    
+    df['ten_tinh'] = df['ten_tinh'].str.upper()
+    
+    # update region
+    region_temp = region.reset_index()
+    df = df.merge(region_temp, how='left', left_on='ten_tinh', right_on='name')
+    df = df.set_index('region')
+    
+    return df
+
+df_map = geo_dataframe('diaphantinh.geojson')
+
+# update mean score
+def draw_map(subject, cmap): 
+    region_mean_score = df_update.groupby("region")[subject].mean()
+    df = df_map.join(region_mean_score)
+    
+    # plot
+    fig, ax = plt.subplots(1, 1, dpi=600, figsize=(20, 5))
+    df.plot(column=subject, cmap=cmap, legend=True, ax=ax)
+    ax.set_xlim([100, 110])
+    ax.set_ylim([7.5, 23])
+    ax.set_axis_off()
+    ax.set_title('Score Map of ' + subject)
+    
+subject_list = ['toan', 'ngu_van', 'ngoai_ngu', 'vat_li', 'hoa_hoc', 'sinh_hoc', 'lich_su', 'dia_li', 'gdcd']
+
+for subject in subject_list: 
+    if subject=='ngoai_ngu':
+        cmap='Reds'
+    else:
+        cmap='Greens'
+    
+    draw_map(subject, cmap)
 
 #%% EDA CORRELATION
 # Correlation between subject and region
